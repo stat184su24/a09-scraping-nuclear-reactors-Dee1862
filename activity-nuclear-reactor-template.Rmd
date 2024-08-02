@@ -28,8 +28,11 @@ SetOfTables <-
 
 Japan <- SetOfTables[[21]]
 
+# you may want to do your own investigation to understand why this line is needed
+names(Japan)[c(3,7)] <- c("type", "grossMW")
 
-Japan1 <-
+
+Japan_cleaned <-
   Japan %>%
   filter(row_number() > 1) %>%
   rename(name = Plantname, 
@@ -37,14 +40,17 @@ Japan1 <-
          model = Model,
          status = Status, 
          netMW = `Capacity(MW)`,
-         construction = Beginbuilding,
+         construction = grossMW,
          operation = Commercialoperation, 
          closure = Closed) %>%
   mutate(
     netMW = as.numeric(netMW),
-    construction = sub("25 Jan 2011[78]", "25 Jan 2011", construction),
-    
-    operation = dmy(operation))
+    reactor = gsub(",", "", reactor),
+    construction = dmy(gsub("\\[.*?\\]", "", construction)),
+    operation = dmy(gsub("\\[.*?\\]", "", operation)),
+    closure = dmy(closure),
+    country = "Japan"
+    )
 
 ```
 
@@ -57,8 +63,9 @@ My answer here.....
 ## Your Turn: Plot Net Generation Capacity vs Construction Date
 
 ```{r}
-#my code here 
-
+ggplot(Japan_cleaned, aes(x = netMW, y = construction, color = reactor)) +
+  geom_point() +
+  labs(title = "Net Generation Capacity vs Date Of Construction", x = "Net generation capacity", y = "Date of construction", color = "Type of reactor")
 
 ```
 
@@ -66,7 +73,34 @@ My answer here.....
 ## Your Turn: Scrape & Clean China Data (then merge with Japan)
 
 ```{r}
-#my code here... 
+#my code here...
+China <- SetOfTables[[10]]
+
+# you may want to do your own investigation to understand why this line is needed
+names(China)[c(3,7)] <- c("type", "grossMW")
+
+
+China_cleaned <-
+  China %>%
+  filter(row_number() > 1) %>%
+  rename(name = Plantname, 
+         reactor = UnitNo.,
+         model = Model,
+         status = Status, 
+         netMW = `Capacity(MW)`,
+         construction = grossMW,
+         operation = Commercialoperation, 
+         closure = Closed) %>%
+  mutate(
+    netMW = as.numeric(netMW),
+    name = gsub("\\[.*?\\]", "", name),
+    construction = dmy(gsub("\\[.*?\\]", "", construction)),
+    operation = dmy(gsub("\\[.*?\\]", "", operation)),
+    closure = dmy(closure),
+    country = "China"
+    )
+
+Combined_data <- bind_rows(Japan_cleaned, China_cleaned)
 
 ```
 
@@ -76,5 +110,38 @@ My answer here.....
 
 ```{r}
 #My code here
+
+Japan_cleaned_for_graph <-
+  Japan %>%
+  rename(name = Plantname, 
+         reactor = UnitNo.,
+         model = Model,
+         status = Status, 
+         netMW = `Capacity(MW)`,
+         construction = grossMW,
+         operation = Commercialoperation, 
+         closure = Closed) %>%
+  mutate(
+    netMW = as.numeric(netMW),
+    reactor = gsub(",", "", reactor),
+    construction = dmy(gsub("\\[.*?\\]", "", construction)),
+    operation = dmy(gsub("\\[.*?\\]", "", operation)),
+    closure = dmy(closure),
+    country = "Japan",
+    reactorID = paste(name, reactor, sep = " ")
+    )
+
+Japan_minimized <- 
+  Japan_cleaned_for_graph %>% 
+  slice(1:32) %>%
+  arrange(desc(reactorID))
+
+Japan_minimized %>%
+  ggplot(aes(y = reactorID, x = construction, xend = operation, yend = reactorID)) +
+  geom_segment(aes(color = type), size = 3) +
+  labs(x = "operation",
+    y = "reactorID",
+    color = "type"
+  )
 
 ```
