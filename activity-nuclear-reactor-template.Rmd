@@ -1,19 +1,50 @@
 ---
 title: "Activity: Nuclear Reactors"
-author: "YOUR NAME HERE"
+author: "DEEKSHITH REDDY BHOOMIREDDY"
 output: html_notebook
 ---
 
 ```{r}
 library(tidyverse)
-
+library(rvest)
+library(dplyr)
+library(lubridate)
 ```
 
 ## Scrape the Data 
 
 ```{r}
-#My code here.... 
 
+
+page <- "https://en.wikipedia.org/wiki/List_of_commercial_nuclear_reactors"
+
+# Extracting all tables
+SetOfTables <- 
+  page %>%
+  read_html() %>%
+  html_nodes(css = "table") %>%
+  html_table(fill = TRUE)
+
+
+Japan <- SetOfTables[[21]]
+
+
+Japan1 <-
+  Japan %>%
+  filter(row_number() > 1) %>%
+  rename(name = Plantname, 
+         reactor = UnitNo.,
+         model = Model,
+         status = Status, 
+         netMW = `Capacity(MW)`,
+         construction = Beginbuilding,
+         operation = Commercialoperation, 
+         closure = Closed) %>%
+  mutate(
+    netMW = as.numeric(netMW),
+    construction = sub("25 Jan 2011[78]", "25 Jan 2011", construction),
+    
+    operation = dmy(operation))
 
 ```
 
