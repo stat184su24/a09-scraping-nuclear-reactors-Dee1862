@@ -58,6 +58,11 @@ Japan_cleaned <-
 ## Your turn: In what ways is the table tidy? How is it not tidy? What’s different about it from a tidy table?
 
 My answer here..... 
+- In what ways is the table tidy: The table has column for each variable, also each observational value has its own row, making the table easy to interpret. 
+
+- How is it not a tidy table: The "grossMW" and "Closed" columns contain mixed values, such as different date formats and dates mixed with other information. Standardizing the date format and removing the other information will improve the tidyness of the data (this is done in the Japan_cleaned table). Moreover, "Commercialoperation" and "Closed" columns are missing few data values.
+
+- What’s different about it from a tidy table: A more tidy version will have a consistent dates format for each column. Also each column will not have any missing cells or values. 
 
 
 ## Your Turn: Plot Net Generation Capacity vs Construction Date
@@ -134,11 +139,14 @@ Japan_cleaned_for_graph <-
 Japan_minimized <- 
   Japan_cleaned_for_graph %>% 
   slice(1:32) %>%
+  filter(!is.na(operation)) %>%
   arrange(desc(reactorID))
 
+
 Japan_minimized %>%
-  ggplot(aes(y = reactorID, x = construction, xend = operation, yend = reactorID)) +
+  ggplot(aes(y = reactorID, x = construction, xend = operation, yend = reactorID), size = 3) +
   geom_segment(aes(color = type), size = 3) +
+  geom_point(aes(shape = status)) +
   labs(x = "operation",
     y = "reactorID",
     color = "type"
